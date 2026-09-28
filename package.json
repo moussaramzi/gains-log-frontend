@@ -1,0 +1,6 @@
+{
+  "name": "gains-log-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static frontend for the Gains Log gym tracker (calls a separately hosted gains-log-backend)"
+}
