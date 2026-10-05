@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+/* Scan markup and the JS modules that build HTML strings for class names. */
+@source "../../public";
+
+/* ---------- Colour tokens (light / dark) ---------- */
+
+:root {
+  --bg: #f4f2ee;
+  --surface: #ffffff;
+  --surface-2: #ecebe6;
+  --border: #ddd9d0;
+  --text: #1c1a16;
+  --text-dim: #6b6659;
+  --accent: #e8542a;
+  --accent-ink: #ffffff;
+  --good: #2f8f5b;
+  --bad: #c94848;
+  --kasem: #2f6fed;
+  --moussa: #e8542a;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161512; --surface: #201e19; --surface-2: #292620; --border: #3a362e;
+    --text: #f3f1ea; --text-dim: #a39c8c; --accent: #ff6b3d; --accent-ink: #1a1006;
+    --good: #4bbf82; --bad: #e5695f; --kasem: #5c9dff; --moussa: #ff6b3d;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #161512; --surface: #201e19; --surface-2: #292620; --border: #3a362e;
+  --text: #f3f1ea; --text-dim: #a39c8c; --accent: #ff6b3d; --accent-ink: #1a1006;
+  --good: #4bbf82; --bad: #e5695f; --kasem: #5c9dff; --moussa: #ff6b3d;
+  color-scheme: dark;
+}
+
+/* Expose the runtime tokens as Tailwind colours: bg-surface, text-dim, border-line, … */
+@theme inline {
+  --color-page: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--border);
+  --color-ink: var(--text);
+  --color-dim: var(--text-dim);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-deep: color-mix(in srgb, var(--accent) 70%, #000 10%);
+  --color-accent-tint: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+  --color-kasem: var(--kasem);
+  --color-moussa: var(--moussa);
+}
+
+@theme {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Bebas Neue", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --breakpoint-xs: 30rem; /* 480px */
+}
+
+/* ---------- Reusable component utilities ---------- */
+
+@utility card {
+  @apply mb-5 rounded-2xl border border-line bg-surface p-4;
+}
+
+@utility section-title {
+  @apply font-display text-[19px] font-bold tracking-[0.3px];
+}
+
+@utility field {
+  @apply border border-line bg-surface-2 font-mono text-ink;
+}
+
+@utility btn {
+  @apply cursor-pointer whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-extrabold disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-accent text-accent-ink;
+}
+
+@utility btn-secondary {
+  @apply btn border border-line bg-surface-2 text-ink;
+}
+
+@utility pill-btn {
+  @apply cursor-pointer rounded-full border border-line text-xs font-semibold text-dim hover:border-dim hover:text-ink;
+}
+
+@utility grid-th {
+  @apply pt-1 pb-2 text-[9.5px] font-bold uppercase tracking-[0.3px] text-dim xs:pt-1.5 xs:pb-2.5 xs:text-[10.5px];
+}
+
+@utility mark {
+  @apply inline-flex size-4.75 items-center justify-center rounded-full font-extrabold xs:size-6.5;
+}
