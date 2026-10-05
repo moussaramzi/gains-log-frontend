@@ -24,8 +24,15 @@ function selectableRange() {
   return { min: todayIso > monthStart ? todayIso : monthStart, max: monthEndIso(month) };
 }
 
+const STATUS = {
+  idle: 'mb-2 text-[12.5px] text-dim',
+  pending: 'mb-2 text-[12.5px] font-bold text-accent',
+  confirmed: 'mb-2 text-[12.5px] font-bold text-good',
+};
+const ROW = 'flex flex-wrap items-center gap-2';
+
 function actionButton(action, owner, text, secondary = false) {
-  return `<button class="cd-btn${secondary ? ' secondary' : ''}" data-action="${action}" data-owner="${owner}" type="button">${text}</button>`;
+  return `<button class="${secondary ? 'btn-secondary' : 'btn-primary'}" data-action="${action}" data-owner="${owner}" type="button">${text}</button>`;
 }
 
 function personBodyHtml(personId) {
@@ -36,29 +43,30 @@ function personBodyHtml(personId) {
   if (!record) {
     const { min, max } = selectableRange();
     const picker = isMe
-      ? `<div class="cd-row">
-           <input type="date" id="cdDate_${personId}" min="${min}" max="${max}">
+      ? `<div class="${ROW}">
+           <input type="date" id="cdDate_${personId}" min="${min}" max="${max}" aria-label="Cheat day date"
+             class="field min-w-0 flex-1 rounded-lg px-2.5 py-2 text-[12.5px]">
            ${actionButton('propose', personId, 'Use cheat day')}
          </div>`
       : '';
-    return `<div class="cd-status">No cheat day used this month yet.</div>${picker}`;
+    return `<div class="${STATUS.idle}">No cheat day used this month yet.</div>${picker}`;
   }
 
   const date = formatIsoShort(record.date);
   if (record.status === 'confirmed') {
-    return `<div class="cd-status confirmed">🎉 Confirmed for ${date}.</div>`;
+    return `<div class="${STATUS.confirmed}">🎉 Confirmed for ${date}.</div>`;
   }
   if (record.status !== 'pending') return '';
 
   if (isMe) {
     const other = escapeHtml(personLabel(otherPerson(personId)));
     return `
-      <div class="cd-status pending">Pending — waiting for ${other} to confirm ${date}.</div>
-      <div class="cd-row">${actionButton('cancel', personId, 'Cancel', true)}</div>`;
+      <div class="${STATUS.pending}">Pending — waiting for ${other} to confirm ${date}.</div>
+      <div class="${ROW}">${actionButton('cancel', personId, 'Cancel', true)}</div>`;
   }
   return `
-    <div class="cd-status pending">${name} wants ${date} as their cheat day.</div>
-    <div class="cd-row">
+    <div class="${STATUS.pending}">${name} wants ${date} as their cheat day.</div>
+    <div class="${ROW}">
       ${actionButton('confirm', personId, 'Confirm')}
       ${actionButton('reject', personId, 'Reject', true)}
     </div>`;
@@ -66,9 +74,15 @@ function personBodyHtml(personId) {
 
 export function renderCheatDays() {
   const people = Object.keys(state.people)
-    .map((personId) => `<div class="cd-person">${personHeaderHtml(personId)}${personBodyHtml(personId)}</div>`)
+    .map(
+      (personId) =>
+        `<div class="border-t border-line py-2.5">${personHeaderHtml(personId)}${personBodyHtml(personId)}</div>`,
+    )
     .join('');
-  card.innerHTML = `<div class="cd-note">${INTRO}</div>${people}<div class="cd-msg" id="cdMsg"></div>`;
+  card.innerHTML = `
+    <div class="mb-3 text-[11px] leading-[1.4] text-dim">${INTRO}</div>
+    ${people}
+    <div id="cdMsg" class="mt-0.5 min-h-3.5 text-[11.5px] text-bad" aria-live="polite"></div>`;
 }
 
 // Each action resolves to the owner's updated list of cheat-day records.

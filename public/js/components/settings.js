@@ -16,7 +16,7 @@ function togglePanel() {
   penaltyInput.value = state.settings.penaltyAmount;
   displayNameInput.value = personLabel(state.currentUser);
   msg.textContent = '';
-  panel.classList.toggle('show');
+  panel.hidden = !panel.hidden;
 }
 
 function readForm() {

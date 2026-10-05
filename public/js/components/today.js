@@ -8,10 +8,11 @@ const dayEl = document.getElementById('todayDay');
 const dateEl = document.getElementById('todayDate');
 const checkBtn = document.getElementById('checkBtn');
 
-function setButton(text, { done = false, disabled = false } = {}) {
+/** variant: 'active' (can check in), 'done' (checked in, can undo) or 'muted' (nothing to do). */
+function setButton(text, variant = 'active') {
   checkBtn.textContent = text;
-  checkBtn.className = 'check-btn' + (done ? ' done' : '');
-  checkBtn.disabled = disabled;
+  checkBtn.dataset.variant = variant;
+  checkBtn.disabled = variant === 'muted';
 }
 
 function isCheckedInToday() {
@@ -27,13 +28,12 @@ export function renderToday() {
 
   dayEl.textContent = today.toLocaleDateString(undefined, { weekday: 'long' });
   dateEl.textContent = formatShort(today);
-  card.classList.toggle('rest', (!gym || cheat) && tracked);
-  card.classList.toggle('notyet', !tracked);
+  card.dataset.state = tracked && (!gym || cheat) ? 'rest' : 'gym';
 
-  if (!tracked) setButton(`Starts ${formatIsoShort(state.settings.startDate)}`, { disabled: true });
-  else if (cheat) setButton('🎉 Cheat day — no gym', { disabled: true });
-  else if (!gym) setButton('Rest day', { disabled: true });
-  else if (isCheckedInToday()) setButton('✓ Checked in — tap to undo', { done: true });
+  if (!tracked) setButton(`Starts ${formatIsoShort(state.settings.startDate)}`, 'muted');
+  else if (cheat) setButton('🎉 Cheat day — no gym', 'muted');
+  else if (!gym) setButton('Rest day', 'muted');
+  else if (isCheckedInToday()) setButton('✓ Checked in — tap to undo', 'done');
   else setButton('Check in');
 }
 

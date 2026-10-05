@@ -19,7 +19,7 @@ let handlers = { onLogin: () => {}, onLogout: () => {} };
 
 function setLoginMsg(text, kind = '') {
   loginMsg.textContent = text;
-  loginMsg.className = 'login-msg' + (kind ? ` ${kind}` : '');
+  loginMsg.dataset.kind = kind;
 }
 
 function setGoButtonIdle() {
@@ -28,8 +28,7 @@ function setGoButtonIdle() {
 }
 
 function pickPerson(id, button) {
-  personPick.querySelectorAll('.person-btn').forEach((b) => b.classList.remove('active'));
-  button.classList.add('active');
+  personPick.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
   pickedName = id;
   setGoButtonIdle();
   setLoginMsg('');
@@ -71,10 +70,13 @@ export function renderLoginButtons() {
   PEOPLE_IDS.filter((id) => state.people[id]).forEach((id) => {
     const label = state.people[id].label || id;
     const btn = document.createElement('button');
-    btn.className = 'person-btn';
+    btn.className =
+      'flex-1 cursor-pointer rounded-[14px] border-2 border-line bg-surface-2 px-2.5 py-4 text-center text-ink transition-colors aria-pressed:border-accent';
     btn.type = 'button';
-    btn.dataset.p = id;
-    btn.innerHTML = `<div class="dot">${escapeHtml(label.charAt(0).toUpperCase())}</div><div class="nm">${escapeHtml(label)}</div>`;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.innerHTML = `
+      <div class="mx-auto mb-2 flex size-8.5 items-center justify-center rounded-full font-display text-base text-white" style="background:${state.people[id].color}">${escapeHtml(label.charAt(0).toUpperCase())}</div>
+      <div class="text-sm font-bold">${escapeHtml(label)}</div>`;
     btn.addEventListener('click', () => pickPerson(id, btn));
     personPick.appendChild(btn);
   });
@@ -85,15 +87,15 @@ export function updateWhoName() {
 }
 
 export function showApp() {
-  loginCard.classList.add('hide');
-  app.classList.add('show');
+  loginCard.hidden = true;
+  app.hidden = false;
   whoBar.hidden = false;
   updateWhoName();
 }
 
 export function showLogin() {
-  app.classList.remove('show');
-  loginCard.classList.remove('hide');
+  app.hidden = true;
+  loginCard.hidden = false;
   whoBar.hidden = true;
 }
 

@@ -12,10 +12,10 @@ export function renderPot(stats) {
   peopleEl.innerHTML = Object.keys(state.people)
     .map(
       (personId) => `
-        <div class="pot-person" style="border-left-color:${state.people[personId].color}">
+        <div class="flex-1 rounded-xl border border-l-4 border-line p-3" style="border-left-color:${state.people[personId].color}">
           ${personHeaderHtml(personId)}
-          <div class="amt">${formatEuro(pot.perPerson[personId])}</div>
-          <div class="sub">${stats[personId].missed} missed &times; €${state.settings.penaltyAmount}</div>
+          <div class="font-display text-[26px] leading-none">${formatEuro(pot.perPerson[personId])}</div>
+          <div class="mt-1 text-[11px] font-medium text-dim">${stats[personId].missed} missed &times; €${state.settings.penaltyAmount}</div>
         </div>`,
     )
     .join('');

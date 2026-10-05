@@ -32,15 +32,15 @@ export function renderPendingBanner() {
 
   if (pendingBy === state.currentUser) {
     banner.innerHTML = `
-      <div class="pb-text">You proposed changing the penalty to ${amount} per missed day — waiting for the other person to confirm.</div>
-      <div class="pb-actions"><button class="pb-reject" data-action="reject" type="button">Cancel proposal</button></div>`;
+      <div class="mb-2.5 font-semibold">You proposed changing the penalty to ${amount} per missed day — waiting for the other person to confirm.</div>
+      <div class="flex gap-2"><button class="btn-secondary" data-action="reject" type="button">Cancel proposal</button></div>`;
   } else {
     const proposer = escapeHtml(personLabel(pendingBy) || 'Someone');
     banner.innerHTML = `
-      <div class="pb-text">${proposer} wants to change the penalty to ${amount} per missed day.</div>
-      <div class="pb-actions">
-        <button class="pb-confirm" data-action="confirm" type="button">Confirm</button>
-        <button class="pb-reject" data-action="reject" type="button">Reject</button>
+      <div class="mb-2.5 font-semibold">${proposer} wants to change the penalty to ${amount} per missed day.</div>
+      <div class="flex gap-2">
+        <button class="btn bg-good text-white" data-action="confirm" type="button">Confirm</button>
+        <button class="btn-secondary" data-action="reject" type="button">Reject</button>
       </div>`;
   }
 }
