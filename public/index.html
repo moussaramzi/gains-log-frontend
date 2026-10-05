@@ -199,16 +199,7 @@
   <div class="login-card" id="loginCard">
     <h2>Who's checking in?</h2>
     <p class="login-sub">Pick your name and enter your 4-digit PIN. First time picks the PIN.</p>
-    <div class="person-pick">
-      <button class="person-btn" data-p="kasem" type="button">
-        <div class="dot">K</div>
-        <div class="nm">Kasem</div>
-      </button>
-      <button class="person-btn" data-p="moussa" type="button">
-        <div class="dot">M</div>
-        <div class="nm">Moussa</div>
-      </button>
-    </div>
+    <div class="person-pick" id="personPick"></div>
     <div class="pin-row">
       <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="&bull; &bull; &bull; &bull;">
     </div>
@@ -220,6 +211,10 @@
   <div class="app" id="app">
     <div class="settings-panel" id="settingsPanel">
       <h3>Settings</h3>
+      <div class="settings-row">
+        <label for="displayNameInput">Your display name</label>
+        <input id="displayNameInput" type="text" maxlength="24">
+      </div>
       <div class="settings-row">
         <label for="startDateInput">Tracking starts on</label>
         <input id="startDateInput" type="date">
@@ -277,7 +272,7 @@
       <div class="pot-people" id="potPeople"></div>
     </div>
 
-    <footer>Gym days run Mon / Wed / Fri / Sun &middot; data shared between Kasem &amp; Moussa</footer>
+    <footer>Gym days run Mon / Wed / Fri / Sun &middot; data shared between <span id="footerNames">Kasem &amp; Moussa</span></footer>
   </div>
 </div>
 
@@ -285,10 +280,8 @@
 (function(){
   "use strict";
 
-  var PEOPLE = {
-    kasem:  { label: "Kasem",  color: "var(--kasem)" },
-    moussa: { label: "Moussa", color: "var(--moussa)" }
-  };
+  var PEOPLE_IDS = ["kasem", "moussa"];
+  var PEOPLE = {}; // populated from the backend by loadPeople() before anything else runs
   var GYM_DOWS = [1,3,5,0];
 
   var currentUser = null;
@@ -384,6 +377,7 @@
   var loginMsg = document.getElementById('loginMsg');
   var settingsBtn = document.getElementById('settingsBtn');
   var settingsPanel = document.getElementById('settingsPanel');
+  var displayNameInput = document.getElementById('displayNameInput');
   var startDateInput = document.getElementById('startDateInput');
   var penaltyInput = document.getElementById('penaltyInput');
   var settingsSave = document.getElementById('settingsSave');
@@ -423,9 +417,17 @@
   settingsBtn.addEventListener('click', function(){
     startDateInput.value = settings.startDate;
     penaltyInput.value = settings.penaltyAmount;
+    displayNameInput.value = PEOPLE[currentUser] ? PEOPLE[currentUser].label : '';
     settingsMsg.textContent = '';
     settingsPanel.classList.toggle('show');
   });
+
+  function updateFooterNames(){
+    var el = document.getElementById('footerNames');
+    if(el && PEOPLE.kasem && PEOPLE.moussa){
+      el.textContent = PEOPLE.kasem.label + ' & ' + PEOPLE.moussa.label;
+    }
+  }
 
   function applySettings(newSettings){
     settings.startDate = newSettings.startDate;
@@ -439,11 +441,27 @@
     var newStart = startDateInput.value || settings.startDate;
     var newPenalty = parseFloat(penaltyInput.value);
     if(isNaN(newPenalty) || newPenalty < 0) newPenalty = settings.penaltyAmount;
+    var newLabel = (displayNameInput.value || '').trim();
+    var renaming = !!(newLabel && PEOPLE[currentUser] && newLabel !== PEOPLE[currentUser].label);
+
     settingsSave.disabled = true;
     settingsSave.textContent = 'Saving…';
-    api('settings', {method:'POST', body:{name:currentUser, pin:currentPin, startDate:newStart, penaltyAmount:newPenalty}}).then(function(res){
-      applySettings(res.settings);
-      settingsMsg.textContent = (res.settings.pendingAmount != null && res.settings.pendingBy === currentUser)
+
+    var tasks = [ api('settings', {method:'POST', body:{name:currentUser, pin:currentPin, startDate:newStart, penaltyAmount:newPenalty}}) ];
+    if(renaming){
+      tasks.push(api('people', {method:'POST', body:{name:currentUser, pin:currentPin, label:newLabel}}));
+    }
+
+    Promise.all(tasks).then(function(results){
+      applySettings(results[0].settings);
+      if(renaming && results[1] && results[1].people){
+        Object.keys(results[1].people).forEach(function(id){
+          if(PEOPLE[id]) PEOPLE[id].label = results[1].people[id].label;
+        });
+        whoName.textContent = PEOPLE[currentUser].label;
+        updateFooterNames();
+      }
+      settingsMsg.textContent = (results[0].settings.pendingAmount != null && results[0].settings.pendingBy === currentUser)
         ? 'Saved. Waiting on the other person to confirm the new penalty.'
         : 'Saved.';
       renderAll();
@@ -495,17 +513,29 @@
     });
   }
 
-  document.querySelectorAll('.person-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      document.querySelectorAll('.person-btn').forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      pickedName = btn.getAttribute('data-p');
-      loginGo.disabled = false;
-      loginGo.textContent = 'Continue as ' + PEOPLE[pickedName].label;
-      setLoginMsg('','');
-      pinInput.focus();
+  var personPick = document.getElementById('personPick');
+  function renderLoginButtons(){
+    personPick.innerHTML = '';
+    PEOPLE_IDS.forEach(function(id){
+      if(!PEOPLE[id]) return;
+      var btn = document.createElement('button');
+      btn.className = 'person-btn';
+      btn.type = 'button';
+      btn.setAttribute('data-p', id);
+      var initial = (PEOPLE[id].label || id).charAt(0).toUpperCase();
+      btn.innerHTML = '<div class="dot">'+initial+'</div><div class="nm">'+PEOPLE[id].label+'</div>';
+      btn.addEventListener('click', function(){
+        personPick.querySelectorAll('.person-btn').forEach(function(b){ b.classList.remove('active'); });
+        btn.classList.add('active');
+        pickedName = id;
+        loginGo.disabled = false;
+        loginGo.textContent = 'Continue as ' + PEOPLE[id].label;
+        setLoginMsg('','');
+        pinInput.focus();
+      });
+      personPick.appendChild(btn);
     });
-  });
+  }
 
   pinInput.addEventListener('input', function(){
     pinInput.value = pinInput.value.replace(/\D/g,'').slice(0,4);
@@ -897,16 +927,35 @@
     pollTimer = setInterval(function(){ Promise.all([loadSettings(), loadCheatDays()]).then(refreshCheckins); }, 15000);
   }
 
-  var saved = loadSession();
-  if(saved.name && saved.pin && PEOPLE[saved.name]){
-    currentUser = saved.name;
-    currentPin = saved.pin;
-    loginCard.classList.add('hide');
-    app.classList.add('show');
-    whoBar.hidden = false;
-    whoName.textContent = PEOPLE[saved.name].label;
-    startPolling();
+  function loadPeople(){
+    return api('people').then(function(res){
+      var people = res.people || {};
+      PEOPLE_IDS.forEach(function(id){
+        var label = (people[id] && people[id].label) || (id.charAt(0).toUpperCase()+id.slice(1));
+        PEOPLE[id] = { label: label, color: 'var(--'+id+')' };
+      });
+    }).catch(function(){
+      // backend unreachable at startup — fall back to defaults so the page still works
+      PEOPLE_IDS.forEach(function(id){
+        if(!PEOPLE[id]) PEOPLE[id] = { label: id.charAt(0).toUpperCase()+id.slice(1), color: 'var(--'+id+')' };
+      });
+    });
   }
+
+  loadPeople().then(function(){
+    renderLoginButtons();
+    updateFooterNames();
+    var saved = loadSession();
+    if(saved.name && saved.pin && PEOPLE[saved.name]){
+      currentUser = saved.name;
+      currentPin = saved.pin;
+      loginCard.classList.add('hide');
+      app.classList.add('show');
+      whoBar.hidden = false;
+      whoName.textContent = PEOPLE[saved.name].label;
+      startPolling();
+    }
+  });
 })();
 </script>
 </body>
