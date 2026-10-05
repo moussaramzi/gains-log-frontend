@@ -27,3 +27,26 @@ npx serve public
 
 (or any static file server) — just make sure `public/config.js` points at a
 running backend first.
+
+> The app uses native ES modules, so it must be served over HTTP — opening
+> `index.html` straight from disk (`file://`) won't work.
+
+## Project structure
+
+```
+public/
+├── index.html            # markup only
+├── config.js             # deployment config (backend URL)
+├── css/styles.css        # all styling
+└── js/
+    ├── main.js           # entry point: wires components, restores session
+    ├── constants.js      # gym days, poll interval, storage keys, grid views
+    ├── state.js          # shared app state + subscribe/notify
+    ├── api.js            # typed wrappers around the backend endpoints
+    ├── storage.js        # session/localStorage helpers
+    ├── sync.js           # loading data + polling the backend
+    ├── render.js         # renders every section from state
+    ├── domain/           # business rules (schedule, stats, penalties)
+    ├── utils/            # date + formatting helpers
+    └── components/       # one module per UI section
+```
